@@ -71,7 +71,18 @@ router.post('/', authVerify, async (req, res) => {
       INSERT INTO books (Title, ISBN, CategoryId, AuthorId, PublishedYear, Price, Quantity, Shelf, Description, BookImage)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    const [result] = await db.query(sqlInsert, [title, isbn, categoryId, authorId, publishedYear, price, quantity || 0, shelf, description, bookImage]);
+    const [result] = await db.query(sqlInsert, [
+      title, 
+      isbn || null, 
+      categoryId || null, 
+      authorId || null, 
+      publishedYear || '2026', 
+      price || 0.00, 
+      quantity || 0, 
+      shelf || null, 
+      description || null, 
+      bookImage || null
+    ]);
     
     return res.status(201).json({ message: 'Book inventory record established successfully.', bookId: result.insertId });
   } catch (error) {
@@ -93,10 +104,43 @@ router.delete('/:id', authVerify, async (req, res) => {
     return res.status(500).json({ message: 'Internal transactional rollback error experienced.' });
   }
 });
+// UPDATE AN EXISTING BOOK ENTITY (Protected Route)
+router.put('/:id', authVerify, async (req, res) => {
+  const bookId = req.params.id;
+  const { title, isbn, categoryId, authorId, publishedYear, price, quantity, shelf, description, bookImage } = req.body;
+
+  if (!title) {
+    return res.status(400).json({ message: 'Book title configuration is mandatory for updates.' });
+  }
+
+  try {
+    const sqlUpdate = `
+      UPDATE books 
+      SET Title = ?, ISBN = ?, CategoryId = ?, AuthorId = ?, PublishedYear = ?, Price = ?, Quantity = ?, Shelf = ?, Description = ?, BookImage = ?
+      WHERE BookId = ?
+    `;
+    
+    const [result] = await db.query(sqlUpdate, [
+      title, isbn || null, categoryId || null, authorId || null, 
+      publishedYear || '2026', price || 0.00, quantity || 0, shelf || null, 
+      description || null, bookImage || null, bookId
+    ]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Target inventory item record not found.' });
+    }
+
+    return res.status(200).json({ message: 'Catalog record modified and saved successfully.' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Failed to update catalog entry details.' });
+  }
+});
+
 // Get all authors for dropdowns
 router.get('/authors', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM authors ORDER BY AuthorName ASC');
+    const [rows] = await db.query('SELECT AuthorId, AuthorName FROM authors ORDER BY AuthorName ASC');
     res.json({ data: rows });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -106,7 +150,7 @@ router.get('/authors', async (req, res) => {
 // Get all categories for dropdowns
 router.get('/categories', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM categories ORDER BY CategoryName ASC');
+    const [rows] = await db.query('SELECT CategoryId, CategoryName FROM categories ORDER BY CategoryName ASC');
     res.json({ data: rows });
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -64,7 +64,7 @@ router.post('/login', async (req, res) => {
 });
 
 router.post('/register', async (req, res) => {
-  const { fullName, email, password, role, gender, phone, address } = req.body;
+  const { fullName, email, Phone, password, role, gender, phone, address } = req.body;
 
   // Basic validation
   if (!fullName || !email || !password) {
@@ -97,7 +97,7 @@ router.post('/register', async (req, res) => {
     } else {
       // Save to the internal staff users table (admin / librarian)
       await db.query(
-        'INSERT INTO users (FullName, Email, Password, Role) VALUES (?, ?, ?, ?)',
+        'INSERT INTO users (FullName, Email, phone, Password, Role) VALUES (?, ?, ?, ?)',
         [fullName, email, hashedPassword, targetRole]
       );
     }

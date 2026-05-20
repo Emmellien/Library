@@ -8,6 +8,7 @@ export default function Layout({ children }) {
   // Define links and list exactly which roles are allowed to see them
   const navigation = [
     { name: 'Dashboard Workspace', path: '/dashboard', allowedRoles: ['admin', 'librarian', 'student', 'member'] },
+    { name: 'Browse Catalog', path: '/catalog', allowedRoles: ['admin', 'librarian', 'student', 'member'] },
     { name: 'Manage Catalog', path: '/books', allowedRoles: ['admin', 'librarian'] },
     { name: 'Authors Portal', path: '/authors', allowedRoles: ['admin', 'librarian'] },
     { name: 'Categories Setup', path: '/categories', allowedRoles: ['admin', 'librarian'] },

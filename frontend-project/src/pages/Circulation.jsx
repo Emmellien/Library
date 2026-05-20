@@ -28,7 +28,7 @@ export default function Circulation() {
       
       const [logsRes, booksRes, membersRes] = await Promise.all([
         fetch('http://localhost:5000/api/transactions/borrow-logs', { headers }),
-        fetch('http://localhost:5000/api/books?limit=100'), // simplified catalog pull
+        fetch('http://localhost:5000/api/books?limit=100'), 
         fetch('http://localhost:5000/api/members?limit=100', { headers })
       ]);
 
@@ -36,7 +36,7 @@ export default function Circulation() {
         logsRes.json(), booksRes.json(), membersRes.json()
       ]);
 
-      if (logsRes.ok) setLogs(logsData.data);
+      if (logsRes.ok) setLogs(logsData.data || []);
       if (booksRes.ok) setBooks(booksData.data || []);
       if (membersRes.ok) setMembers(membersData.data || []);
     } catch (err) {
@@ -77,6 +77,24 @@ export default function Circulation() {
     }
   };
 
+  // Process Online Digital Request Actions (Approve / Deny)
+  const handleRequestAction = async (id, actionType) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/transactions/${actionType}-request/${id}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.message || 'Failed to process digital request');
+
+      showNotice(data.message, 'success');
+      syncDeskData();
+    } catch (err) {
+      showNotice(err.message, 'error');
+    }
+  };
+
   // Process Return Settlement
   const handleReturnConfirm = async (e) => {
     e.preventDefault();
@@ -105,6 +123,10 @@ export default function Circulation() {
     }
   };
 
+  // Separate pending digital student requests from active/past physical loans
+  const pendingRequests = logs.filter(log => log.Status === 'Requested');
+  const activeCirculationLogs = logs.filter(log => log.Status !== 'Requested');
+
   return (
     <Layout>
       {/* Dynamic Status Notifications Banner */}
@@ -118,12 +140,65 @@ export default function Circulation() {
         </div>
       )}
 
+      {/* Online Digital Requests Approval Queue Panel */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm mb-8">
+        <div className="mb-4">
+          <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <span>📥</span> Online Member Requests Queue
+          </h3>
+          <p className="text-xs text-slate-500">Approve or deny remote digital requests submitted by active patrons from their dashboard consoles.</p>
+        </div>
+
+        <div className="overflow-x-auto rounded-xl border border-slate-200/60">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+                <th className="p-4">Student / Patron</th>
+                <th className="p-4">Requested Volume Item</th>
+                <th className="p-4">Submission Timeline</th>
+                <th className="p-4 text-center">Desk Queue Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {pendingRequests.map((req) => (
+                <tr key={req.BorrowId} className="hover:bg-slate-50/50 transition-colors font-medium">
+                  <td className="p-4 text-slate-900 font-semibold">{req.MemberName}</td>
+                  <td className="p-4 text-slate-700">{req.BookTitle}</td>
+                  <td className="p-4 text-xs text-slate-400 font-mono">{req.BorrowDate}</td>
+                  <td className="p-4 flex justify-center gap-2">
+                    <button
+                      onClick={() => handleRequestAction(req.BorrowId, 'approve')}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-3 py-1.5 rounded-lg shadow-sm transition-colors"
+                    >
+                      Approve & Issue
+                    </button>
+                    <button
+                      onClick={() => handleRequestAction(req.BorrowId, 'reject')}
+                      className="bg-white hover:bg-rose-50 text-rose-600 border border-slate-200 hover:border-rose-200 font-semibold text-xs px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      Deny
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {pendingRequests.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="p-6 text-center text-slate-400 font-normal italic bg-slate-50/20">
+                    No remote member loan requests currently awaiting workspace validation.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* LEFT COLUMN: Check-out Terminal Panel */}
+        {/* LEFT COLUMN: Physical Check-out Terminal Panel */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 h-fit">
           <div className="mb-4">
             <h2 className="text-xl font-bold text-slate-900">Issue Document</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Allocate physical copies to registered network patrons.</p>
+            <p className="text-xs text-slate-500 mt-0.5">Allocate physical copies directly to registered network patrons at the desk.</p>
           </div>
 
           <form onSubmit={handleBorrowSubmit} className="space-y-4">
@@ -197,7 +272,7 @@ export default function Circulation() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
-                {logs.map((log) => (
+                {activeCirculationLogs.map((log) => (
                   <tr key={log.BorrowId} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4">
                       <div className="font-semibold text-slate-900">{log.BookTitle}</div>
@@ -233,7 +308,7 @@ export default function Circulation() {
                     </td>
                   </tr>
                 ))}
-                {logs.length === 0 && (
+                {activeCirculationLogs.length === 0 && (
                   <tr>
                     <td colSpan="4" className="p-8 text-center text-slate-400 font-medium">No active or historical transactional items recorded in database.</td>
                   </tr>

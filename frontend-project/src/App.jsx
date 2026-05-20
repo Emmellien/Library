@@ -7,7 +7,10 @@ import Circulation from './pages/Circulation';
 import Members from './pages/Members';
 import Authors from './pages/Authors';
 import Categories from './pages/Categories';
+import Catalog from './pages/Catalog';
 import Reports from './pages/Reports';
+import Home from './pages/Home';
+import Register from './pages/Register';
 
 const ProtectedRoute = ({ children }) => {
   const { token } = useAuth();
@@ -19,7 +22,9 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/books" element={<ProtectedRoute><Books /></ProtectedRoute>} />
           <Route path="/circulation" element={<ProtectedRoute><Circulation /></ProtectedRoute>} />
@@ -27,6 +32,7 @@ function App() {
           <Route path="/authors" element={<ProtectedRoute><Authors /></ProtectedRoute>} />
           <Route path="/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+          <Route path="/catalog" element={<ProtectedRoute><Catalog /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
