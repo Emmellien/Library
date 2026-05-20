@@ -6,33 +6,121 @@ export default function Dashboard() {
   const { user, token } = useAuth();
   const [logs, setLogs] = useState([]);
   const [metrics, setMetrics] = useState({ books: 0, borrowed: 0, members: 0 });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!token) return;
+
     const fetchDashboardContext = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/transactions/borrow-logs', {
+        // Determine URL based on the user's role profile
+        const targetUrl = user?.role === 'member' 
+          ? 'http://localhost:5000/api/transactions/my-loans'
+          : 'http://localhost:5000/api/transactions/borrow-logs';
+
+        const res = await fetch(targetUrl, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const result = await res.json();
+        
         if (res.ok) {
-          setLogs(result.data);
+          // Both endpoints pass arrays, map them carefully here
+          const arrayData = result.data || [];
+          setLogs(arrayData);
           
-          // Generate quick structural tracking analytical indicators
-          const totalBorrowed = result.data.filter(log => log.Status === 'Borrowed').length;
-          const uniqueMembers = new Set(result.data.map(log => log.MemberId)).size;
-          setMetrics({
-            books: result.data.length,
-            borrowed: totalBorrowed,
-            members: uniqueMembers
-          });
+          if (user?.role !== 'member') {
+            // Staff analytics indicators
+            const totalBorrowed = arrayData.filter(log => log.Status === 'Borrowed').length;
+            const uniqueMembers = new Set(arrayData.map(log => log.MemberId)).size;
+            setMetrics({
+              books: arrayData.length,
+              borrowed: totalBorrowed,
+              members: uniqueMembers
+            });
+          }
         }
       } catch (err) {
         console.error('Error fetching dashboard records:', err);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchDashboardContext();
-  }, [token]);
 
+    fetchDashboardContext();
+  }, [token, user]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64 text-slate-400 font-medium text-sm">
+          Loading dashboard session profile workspace...
+        </div>
+      </Layout>
+    );
+  }
+
+  // ==========================================
+  // VIEW A: REGISTERED MEMBER VIEW 
+  // ==========================================
+  if (user?.role === 'member') {
+    return (
+      <Layout>
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-6">
+          <h1 className="text-xl font-bold text-slate-900">Welcome back, {user?.fullName}!</h1>
+          <p className="text-xs text-slate-500 mt-1">Here is a real-time summary of your borrowed library books and status trackers.</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <h3 className="font-bold text-slate-800 mb-4">My Personal Borrowed Books</h3>
+          <div className="overflow-x-auto rounded-xl border border-slate-200/60">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-bold border-b border-slate-200">
+                <tr>
+                  <th className="p-4">Book Title</th>
+                  <th className="p-4">Borrowed On</th>
+                  <th className="p-4">Due Return Date</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4">Accumulated Fines</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {logs.map((log, index) => (
+                  <tr key={log.BorrowId || index} className="hover:bg-slate-50/50">
+                    <td className="p-4 font-semibold text-slate-900">{log.Title}</td>
+                    <td className="p-4 text-slate-500 font-medium">{log.BorrowDate}</td>
+                    <td className="p-4 text-slate-500 font-bold">{log.ReturnDate}</td>
+                    <td className="p-4">
+                      <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wider ${
+                        log.Status === 'Borrowed' 
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200' 
+                          : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                      }`}>
+                        {log.Status}
+                      </span>
+                    </td>
+                    <td className="p-4 font-mono text-rose-600 font-bold">
+                      {log.Fine > 0 ? `$${parseFloat(log.Fine).toFixed(2)}` : '$0.00'}
+                    </td>
+                  </tr>
+                ))}
+                {logs.length === 0 && (
+                  <tr>
+                    <td colSpan="5" className="p-8 text-center text-slate-400 font-medium bg-slate-50/30">
+                      You are not currently borrowing any books from the library.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // ==========================================
+  // VIEW B: INTERNAL STAFF / ADMIN DASHBOARD
+  // ==========================================
   return (
     <Layout>
       {/* Workspace Header Panel */}

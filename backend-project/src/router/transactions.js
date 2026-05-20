@@ -157,4 +157,26 @@ router.get('/reports-summary', async (req, res) => {
   }
 });
 
+// @route   GET /api/transactions/my-loans
+// @desc    Get borrow logs and fines for the currently logged-in member
+router.get('/my-loans', authVerify, async (req, res) => {
+  try {
+    // req.user.userId comes automatically from the logged-in token
+    const memberId = req.user.userId; 
+
+    const [myLogs] = await db.query(`
+      SELECT b.BorrowId, bk.Title, b.BorrowDate, b.ReturnDate, b.Status, r.Fine, r.ReturnedDate
+      FROM borrow b
+      JOIN books bk ON b.BookId = bk.BookId
+      LEFT JOIN returns r ON b.BorrowId = r.BorrowId
+      WHERE b.MemberId = ?
+      ORDER BY b.BorrowDate DESC
+    `, [memberId]);
+
+    res.status(200).json({ data: myLogs });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error retrieving your records.' });
+  }
+});
+
 module.exports = router;
