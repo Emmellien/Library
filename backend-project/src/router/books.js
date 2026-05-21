@@ -140,13 +140,55 @@ router.put('/:id', authVerify, async (req, res) => {
 // Get all authors for dropdowns
 router.get('/authors', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT AuthorId, AuthorName FROM authors ORDER BY AuthorName ASC');
+    const [rows] = await db.query(
+      'SELECT AuthorId, AuthorName, Country, BirthDate FROM authors ORDER BY AuthorName ASC'
+    );
     res.json({ data: rows });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
+// Add new author
+router.post('/authors',authVerify, async (req, res) => {
+  try {
+    // FIX: Casing matched to what frontend sends
+    const { authorName, country, BirthDate } = req.body; 
+    
+    if (!authorName) {
+      return res.status(400).json({ message: 'Author name is required' });
+    }
+
+    const sqlInsert = `INSERT INTO authors (AuthorName, Country, BirthDate) VALUES (?, ?, ?)`;
+    const [result] = await db.query(sqlInsert, [authorName, country, BirthDate || null]);
+    
+    return res.status(201).json({ 
+      message: 'Author record created successfully.', 
+      AuthorId: result.insertId 
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Update an existing author
+router.put('/authors/:id',authVerify, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { authorName, country, BirthDate } = req.body;
+
+    const sqlUpdate = `UPDATE authors SET AuthorName = ?, Country = ?, BirthDate = ? WHERE AuthorId = ?`;
+    const [result] = await db.query(sqlUpdate, [authorName, country, BirthDate || null, id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Author not found' });
+    }
+
+    return res.json({ message: 'Author updated successfully.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 // Get all categories for dropdowns
 router.get('/categories', async (req, res) => {
   try {

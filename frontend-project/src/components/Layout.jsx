@@ -7,13 +7,13 @@ export default function Layout({ children }) {
 
   // Define links and list exactly which roles are allowed to see them
   const navigation = [
-    { name: 'Dashboard Workspace', path: '/dashboard', allowedRoles: ['admin', 'librarian', 'student', 'member'] },
-    { name: 'Browse Catalog', path: '/catalog', allowedRoles: ['admin', 'librarian', 'student', 'member'] },
-    { name: 'Manage Catalog', path: '/books', allowedRoles: ['admin', 'librarian'] },
-    { name: 'Authors Portal', path: '/authors', allowedRoles: ['admin', 'librarian'] },
-    { name: 'Categories Setup', path: '/categories', allowedRoles: ['admin', 'librarian'] },
+    { name: 'Dashboard', path: '/dashboard', allowedRoles: ['admin', 'librarian', 'student', 'member'] },
+    { name: 'Browse Books', path: '/catalog', allowedRoles: ['admin', 'librarian', 'student', 'member'] },
+    { name: 'Manage Management', path: '/books', allowedRoles: ['admin', 'librarian'] },
+    { name: 'Authors ', path: '/authors', allowedRoles: ['admin', 'librarian'] },
+    { name: 'Categories ', path: '/categories', allowedRoles: ['admin', 'librarian'] },
     { name: 'Manage Members', path: '/members', allowedRoles: ['admin', 'librarian'] },
-    { name: 'Circulation Desk', path: '/circulation', allowedRoles: ['admin', 'librarian'] },
+    { name: 'Borrow', path: '/circulation', allowedRoles: ['admin', 'librarian'] },
     { name: 'Reports & Analytics', path: '/reports', allowedRoles: ['admin'] } // Only Admin can view reports!
   ];
 

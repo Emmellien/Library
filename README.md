@@ -116,7 +116,7 @@ Person who works in the library.
 Person who borrows books.
 
 ### Member Can:
-- Login
+- Login / defoult password for member is :123456 with Email Address
 - Search books
 - View borrowed books
 - View return dates

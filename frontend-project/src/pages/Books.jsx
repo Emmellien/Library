@@ -228,7 +228,7 @@ export default function Books() {
                       onClick={() => handleDeleteBook(book.BookId)}
                       className="text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors text-xs font-semibold border border-transparent hover:border-red-100"
                     >
-                      Scrub
+                      Delete
                     </button>
                   </td>
                 </tr>
