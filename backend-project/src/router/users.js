@@ -9,7 +9,7 @@ router.get('/staff-public', async (req, res) => {
   try {
     // Selects only non-sensitive identifying parameters out of users dataset matrix
     const sqlQuery = `
-      SELECT UserId, FullName, Email, Role 
+      SELECT UserId, FullName, Email,Phone ,Role 
       FROM users 
       WHERE Role IN ('Admin', 'Librarian')
       ORDER BY Role ASC, FullName ASC
