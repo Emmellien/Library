@@ -1,0 +1,20 @@
+{
+  "name": "niyigaba_emmellien_guillaume_library",
+  "version": "1.0.0",
+  "description": "A full-stack Library Management System built using:",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Emmellien/Library.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Emmellien/Library/issues"
+  },
+  "homepage": "https://github.com/Emmellien/Library#readme"
+}
